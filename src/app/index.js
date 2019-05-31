@@ -87,6 +87,7 @@ export class App {
         log.warn('Disconnected from %s', client.url, event);
 
         if (this.window) this.window.send('down');
+        if (this.constructor.preferences_window) this.constructor.preferences_window.send('authenticated-user', null);
 
         if (event !== 1005) this.client.tryConnect();
 
@@ -140,6 +141,15 @@ export class App {
         Object.assign(authenticated_user, response.data);
 
         this.client.connection.authenticated_user = authenticated_user;
+
+        if (this.constructor.preferences_window) {
+            this.constructor.preferences_window.send('authenticated-user', {
+                id: authenticated_user.id,
+                token: authenticated_user.token,
+                asset_token: authenticated_user.asset_token,
+                data: authenticated_user,
+            });
+        }
 
         this.client.connection.getHomeSettings().then(d => this.client.home_settings = d);
         this.client.refreshAccessories();
@@ -336,6 +346,15 @@ export function showPreferences() {
 
 ipcMain.on('get-preferences-url', event => {
     event.sender.send('preferences-url', app.url);
+});
+
+ipcMain.on('get-authenticated-user', event => {
+    event.sender.send('authenticated-user', app.client.connection && app.client.connection.authenticated_user ? {
+        id: app.client.connection.authenticated_user.id,
+        token: app.client.connection.authenticated_user.token,
+        asset_token: app.client.connection.authenticated_user.asset_token,
+        data: app.client.connection.authenticated_user,
+    } : null);
 });
 
 ipcMain.on('set-preferences', async (event, data) => {
