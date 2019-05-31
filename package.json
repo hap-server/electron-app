@@ -1,0 +1,46 @@
+{
+    "name": "@hap-server/electron-app",
+    "version": "0.1.0",
+    "description": "",
+    "keywords": [
+        "homekit",
+        "apple-homekit",
+        "iot",
+        "hap",
+        "hap-nodejs"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Samuel Elliott",
+        "url": "https://samuelthomas2774.github.io"
+    },
+    "main": "dist/index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://gitlab.fancy.org.uk/hap-server/electron-app.git"
+    },
+    "private": true,
+    "engines": {
+        "node": ">=8.0.0 <12"
+    },
+    "dependencies": {
+        "@hap-server/hap-server": "^0.4.0",
+        "electron": "^5.0.2",
+        "node-persist": "^3.0.4",
+        "ws": "^6.2.1"
+    },
+    "devDependencies": {
+        "babel-core": "^6.26.3",
+        "babel-preset-env": "^1.7.0",
+        "gulp": "^4.0.1",
+        "gulp-babel": "^7.0.1",
+        "pump": "^3.0.0"
+    },
+    "scripts": {
+        "build": "gulp build",
+        "start": "electron dist/app"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}
