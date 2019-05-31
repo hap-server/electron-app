@@ -82,7 +82,7 @@ export class App {
 
         if (this.window) this.window.send('down');
 
-        if (event) this.client.tryConnect();
+        if (event !== 1005) this.client.tryConnect();
 
         this.constructor.menu.items[1].enabled = true;
         this.constructor.menu.items[2].enabled = false;
@@ -134,6 +134,8 @@ export class App {
                 log.info('AuthenticatedUser', authenticated_user);
                 this.client.connection.authenticated_user = authenticated_user;
             }
+        } else {
+            event.sender.send('r', {messageid, response: null});
         }
     }
 

@@ -45,7 +45,7 @@ import {ipcRenderer, remote} from 'electron';
     const button = document.createElement('button');
     button.textContent = 'Save';
     button.addEventListener('click', event => {
-        // ...
+        ipcRenderer.send('set-preferences', {url: input.value});
         window.close();
     });
     row.appendChild(button);
