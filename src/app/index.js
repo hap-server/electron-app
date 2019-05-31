@@ -52,17 +52,14 @@ export class App {
     }
     set websocket_url(url) {
         this.client.url = url;
-        this.client.disconnect().then(() => this.client.tryConnect());
-        if (this.window) this.window.send('reset-has-connected');
+        if (this.client.connected) this.client.disconnect().then(() => this.client.tryConnect());
+        // if (this.window) this.window.send('reset-has-connected');
     }
 
     async connected(connection) {
-        log.info('Connected to %s', client.url);
+        log.info('Connected to %s', client.url, client);
 
         if (this.window) this.window.send('up');
-
-        this.client.connection.getHomeSettings().then(d => this.client.home_settings = d);
-        this.client.refreshAccessories();
 
         connection.on('received-broadcast', data => {
             if (this.window) this.window.send('b', data);
@@ -74,7 +71,7 @@ export class App {
         this.constructor.menu.items[2].enabled = true;
 
         this.constructor.tray.setContextMenu(this.constructor.menu);
-        electron.app.dock.setMenu(this.constructor.menu);
+        if (process.platform === 'darwin') electron.app.dock.setMenu(this.constructor.menu);
     }
 
     disconnected(event) {
@@ -88,7 +85,7 @@ export class App {
         this.constructor.menu.items[2].enabled = false;
 
         this.constructor.tray.setContextMenu(this.constructor.menu);
-        electron.app.dock.setMenu(this.constructor.menu);
+        if (process.platform === 'darwin') electron.app.dock.setMenu(this.constructor.menu);
     }
 
     handleUpdateCharateristic(accessory_uuid, service_uuid, characteristic_uuid, details) {
@@ -133,6 +130,9 @@ export class App {
 
                 log.info('AuthenticatedUser', authenticated_user);
                 this.client.connection.authenticated_user = authenticated_user;
+
+                this.client.connection.getHomeSettings().then(d => this.client.home_settings = d);
+                this.client.refreshAccessories();
             }
         } else {
             event.sender.send('r', {messageid, response: null});
@@ -164,7 +164,7 @@ export class App {
         this.window.once('ready-to-show', () => {
             this.window.show();
 
-            electron.app.dock.show();
+            if (process.platform === 'darwin') electron.app.dock.show();
         });
 
         // Emitted when the window is closed
@@ -174,7 +174,7 @@ export class App {
             // when you should delete the corresponding element
             this.window = null;
 
-            if (!BrowserWindow.getAllWindows().length) electron.app.dock.hide();
+            if (process.platform === 'darwin' && !BrowserWindow.getAllWindows().length) electron.app.dock.hide();
         });
     }
 
@@ -193,7 +193,7 @@ export class App {
         ]);
 
         this.tray.setContextMenu(this.menu);
-        electron.app.dock.setMenu(this.menu);
+        if (process.platform === 'darwin') electron.app.dock.setMenu(this.menu);
 
         session.defaultSession.webRequest.onBeforeSendHeaders(this.onBeforeSendHeaders.bind(this));
 
@@ -206,7 +206,7 @@ export class App {
         const url = await this.storage.getItem('URL');
         if (url) app.url = url;
 
-        app.client.tryConnect();
+        await app.client.tryConnect();
 
         log.info('Ready, creating window');
 
@@ -239,7 +239,7 @@ export class App {
         this.preferences_window.once('ready-to-show', () => {
             this.preferences_window.show();
 
-            electron.app.dock.show();
+            if (process.platform === 'darwin') electron.app.dock.show();
         });
 
         // Emitted when the window is closed
@@ -249,7 +249,7 @@ export class App {
             // when you should delete the corresponding element
             this.preferences_window = null;
 
-            if (!BrowserWindow.getAllWindows().length) electron.app.dock.hide();
+            if (process.platform === 'darwin' && !BrowserWindow.getAllWindows().length) electron.app.dock.hide();
         });
     }
 
@@ -264,7 +264,7 @@ export class App {
     }
 }
 
-electron.app.dock.hide();
+if (process.platform === 'darwin') electron.app.dock.hide();
 
 export const app = new App();
 const client = app.client;
@@ -293,7 +293,9 @@ ipcMain.on('set-preferences', async (event, data) => {
     }
 });
 
-electron.systemPreferences.subscribeNotification('AppleInterfaceThemeChangedNotification', () => {
+if (process.platform === 'darwin') {
+    electron.systemPreferences.subscribeNotification('AppleInterfaceThemeChangedNotification', () => {
+        electron.systemPreferences.setAppLevelAppearance(electron.systemPreferences.isDarkMode() ? 'dark' : 'light');
+    });
     electron.systemPreferences.setAppLevelAppearance(electron.systemPreferences.isDarkMode() ? 'dark' : 'light');
-});
-electron.systemPreferences.setAppLevelAppearance(electron.systemPreferences.isDarkMode() ? 'dark' : 'light');
+}
