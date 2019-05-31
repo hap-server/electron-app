@@ -7,7 +7,7 @@ notifications.
 Installation
 ---
 
-This isn't published to npm and doesn't have any releases so you have to use use git to install.
+This isn't published to npm and doesn't have any prebuilt releases so you have to use git to install.
 
 ```
 git clone https://gitlab.fancy.org.uk/hap-server/electron-app.git hap-server-app
