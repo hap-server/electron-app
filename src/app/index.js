@@ -72,6 +72,15 @@ export class App {
 
         this.constructor.tray.setContextMenu(this.constructor.menu);
         if (process.platform === 'darwin') electron.app.dock.setMenu(this.constructor.menu);
+
+        const token = await this.constructor.storage.getItem('Token');
+        if (this.ready && token) {
+            try {
+                await app.authenticateWithToken(token);
+            } catch (err) {
+                log.error('Error authenticating', err);
+            }
+        }
     }
 
     disconnected(event) {
@@ -116,6 +125,28 @@ export class App {
         notification.show();
     }
 
+    async authenticateWithToken(token) {
+        const response = await this.client.connection.send({
+            type: 'authenticate',
+            token,
+        });
+
+        if (response.reject || !response.success) throw new Error('Error restoring session');
+
+        const authenticated_user = new AuthenticatedUser(response.authentication_handler_id, response.user_id);
+
+        Object.defineProperty(authenticated_user, 'token', {value: token});
+        Object.defineProperty(authenticated_user, 'asset_token', {value: response.asset_token});
+        Object.assign(authenticated_user, response.data);
+
+        this.client.connection.authenticated_user = authenticated_user;
+
+        this.client.connection.getHomeSettings().then(d => this.client.home_settings = d);
+        this.client.refreshAccessories();
+
+        return authenticated_user;
+    }
+
     async sendFromRenderer(event, {messageid, data}) {
         if (this.client.connection) {
             const response = await this.client.connection.send(data);
@@ -124,12 +155,23 @@ export class App {
             if (data.type === 'authenticate' && response.success) {
                 const authenticated_user = new AuthenticatedUser(response.authentication_handler_id, response.user_id);
 
-                Object.defineProperty(authenticated_user, 'token', {value: response.token});
+                Object.defineProperty(authenticated_user, 'token', {value: response.token || data.token});
                 Object.defineProperty(authenticated_user, 'asset_token', {value: response.asset_token});
                 Object.assign(authenticated_user, response.data);
 
                 log.info('AuthenticatedUser', authenticated_user);
                 this.client.connection.authenticated_user = authenticated_user;
+
+                if (this.constructor.preferences_window) {
+                    this.constructor.preferences_window.send('authenticated-user', {
+                        id: authenticated_user.id,
+                        token: authenticated_user.token,
+                        asset_token: authenticated_user.asset_token,
+                        data: authenticated_user,
+                    });
+                }
+
+                await this.constructor.storage.setItem('Token', authenticated_user.token);
 
                 this.client.connection.getHomeSettings().then(d => this.client.home_settings = d);
                 this.client.refreshAccessories();
@@ -208,10 +250,21 @@ export class App {
 
         await app.client.tryConnect();
 
-        log.info('Ready, creating window');
+        const token = await this.storage.getItem('Token');
 
-        // TODO: authenticate in the main process instead of letting the main window authenticate
-        app.showWindow();
+        if (token) {
+            try {
+                await app.authenticateWithToken(token);
+            } catch (err) {
+                log.error('Error authenticating', err);
+            }
+        }
+
+        log.info('Ready');
+        app.ready = true;
+
+        // If we're not authenticated open the main window so the user can authenticate
+        if (!app.client.connection.authenticated_user) app.showWindow();
     }
 
     static showPreferences() {
