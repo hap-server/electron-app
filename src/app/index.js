@@ -69,12 +69,26 @@ export class App {
         });
 
         connection.on('update-characteristic', this.handleUpdateCharateristic.bind(this));
+
+        this.constructor.menu.items[1].enabled = false;
+        this.constructor.menu.items[2].enabled = true;
+
+        this.constructor.tray.setContextMenu(this.constructor.menu);
+        electron.app.dock.setMenu(this.constructor.menu);
     }
 
     disconnected(event) {
         log.warn('Disconnected from %s', client.url, event);
 
         if (this.window) this.window.send('down');
+
+        if (event) this.client.tryConnect();
+
+        this.constructor.menu.items[1].enabled = true;
+        this.constructor.menu.items[2].enabled = false;
+
+        this.constructor.tray.setContextMenu(this.constructor.menu);
+        electron.app.dock.setMenu(this.constructor.menu);
     }
 
     handleUpdateCharateristic(accessory_uuid, service_uuid, characteristic_uuid, details) {
@@ -140,6 +154,9 @@ export class App {
             },
         });
 
+        this.window.base_url = this.url;
+        this.window.connected = this.client.connected;
+
         this.window.loadFile(require.resolve('@hap-server/hap-server/public/index.html'));
 
         this.window.once('ready-to-show', () => {
@@ -162,6 +179,20 @@ export class App {
     static async ready() {
         require('./menu');
 
+        this.tray = new Tray(electron.nativeImage.createEmpty());
+        this.tray.setTitle('Home');
+
+        this.menu = Menu.buildFromTemplate([
+            {label: 'Show', click: () => app.showWindow()},
+            {label: 'Connect', click: () => app.client.connect(), enabled: true},
+            {label: 'Disconnect', click: () => app.client.connection.ws.close(), enabled: false},
+            {type: 'separator'},
+            {label: 'Preferences', click: () => this.showPreferences()},
+        ]);
+
+        this.tray.setContextMenu(this.menu);
+        electron.app.dock.setMenu(this.menu);
+
         session.defaultSession.webRequest.onBeforeSendHeaders(this.onBeforeSendHeaders.bind(this));
 
         this.storage = persist.create({
@@ -176,18 +207,6 @@ export class App {
         app.client.tryConnect();
 
         log.info('Ready, creating window');
-
-        this.tray = new Tray(electron.nativeImage.createEmpty());
-        this.tray.setTitle('Home');
-
-        this.menu = Menu.buildFromTemplate([
-            {label: 'Show', click: () => app.showWindow()},
-            // {type: 'divider'},
-            {label: 'Preferences', click: () => this.showPreferences()},
-        ]);
-
-        this.tray.setContextMenu(this.menu);
-        electron.app.dock.setMenu(this.menu);
 
         // TODO: authenticate in the main process instead of letting the main window authenticate
         app.showWindow();

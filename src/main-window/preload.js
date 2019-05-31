@@ -1,31 +1,7 @@
 import electron from 'electron';
 import url from 'url';
 
-const base_url = 'http://127.0.0.1:8082';
-
 global.__HAP_SERVER_NATIVE_HOOK__ = ({Client, Connection, Vue, MainComponent}) => {
-    const base = document.createElement('base');
-    base.setAttribute('href', base_url);
-    document.head.appendChild(base);
-
-    // Patch document.head.appendChild to resolve chunk links properly
-    const appendChild = document.head.appendChild;
-    document.head.appendChild = function(script) {
-        if (script.tagName === 'SCRIPT') {
-            const base = 'file://' + require.resolve('@hap-server/hap-server/public/index.html');
-            const src = script.src = url.resolve(base, script.getAttribute('src'));
-            console.log('src', src);
-        }
-
-        if (script.tagName === 'LINK') {
-            const base = 'file://' + require.resolve('@hap-server/hap-server/public/index.html');
-            const src = script.href = url.resolve(base, script.getAttribute('href'));
-            console.log('src', src);
-        }
-
-        return appendChild.apply(this, arguments);
-    };
-
     class IPCConnection extends Connection {
         constructor(ipc) {
             super({});
@@ -34,14 +10,7 @@ global.__HAP_SERVER_NATIVE_HOOK__ = ({Client, Connection, Vue, MainComponent}) =
             this.ipc = ipc;
 
             this.ipc.on('url', (event, data) => {
-                base.setAttribute('href', base_url);
-            });
-
-            this.ipc.on('up', event => {
-                this.connected = true;
-            });
-            this.ipc.on('down', event => {
-                this.connected = false;
+                native_hook.base_url = data;
             });
 
             this.ipc.on('d', (event, data) => {
@@ -83,27 +52,45 @@ global.__HAP_SERVER_NATIVE_HOOK__ = ({Client, Connection, Vue, MainComponent}) =
 
     const connection = new IPCConnection(electron.ipcRenderer);
 
-    return class NativeClient extends Client {
+    class NativeClient extends Client {
         constructor() {
             super();
 
             this.accessories = {};
             this.layouts = {};
+
+            connection.ipc.on('up', event => {
+                console.log('Connected');
+                this.connection = connection;
+                this.emit('connected', connection);
+                this.connected = true;
+            });
+            connection.ipc.on('down', event => {
+                this.handleDisconnected();
+
+                global.$root.$children[0].connection = null;
+            });
+
+            setTimeout(() => {
+                if (this.connection) return;
+
+                if (electron.remote.getCurrentWindow().connected) {
+                    this.connection = connection;
+                    this.emit('connected', connection);
+                    this.connected = true;
+                }
+            }, 0);
         }
 
         async connect() {
-            this.connection = connection;
-            this.connected = true;
-
-            connection.on('received-broadcast', this._handleBroadcastMessage);
-
-            this.emit('connected', connection);
-
-            return connection;
+            return this.connection;
         }
 
         disconnect() {
             throw new Error('Cannot close IPC connection');
         }
-    };
+    }
+
+    const native_hook = {Client: NativeClient, base_url: electron.remote.getCurrentWindow().base_url};
+    return native_hook;
 };

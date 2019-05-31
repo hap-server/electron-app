@@ -24,7 +24,7 @@
         "node": ">=8.0.0 <12"
     },
     "dependencies": {
-        "@hap-server/hap-server": "^0.4.0",
+        "@hap-server/hap-server": "^0.4.3",
         "electron": "^5.0.2",
         "node-persist": "^3.0.4",
         "ws": "^6.2.1"
