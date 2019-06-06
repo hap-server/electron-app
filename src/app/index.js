@@ -384,3 +384,19 @@ if (process.platform === 'darwin') {
     });
     electron.systemPreferences.setAppLevelAppearance(electron.systemPreferences.isDarkMode() ? 'dark' : 'light');
 }
+
+const interactive = !electron.app.isPackaged && process.argv.includes('--interactive');
+
+if (interactive) {
+    electron.app.on('quit', () => {
+        require('repl').repl.close();
+    });
+
+    log.warn('Disabling logging for REPL');
+    console.log = console.error = () => {};
+
+    global.App = App;
+    global.app = app;
+
+    global.accessories = app.client.accessories;
+}

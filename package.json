@@ -38,7 +38,8 @@
     },
     "scripts": {
         "build": "gulp build",
-        "start": "electron dist/app"
+        "start": "electron dist/app",
+        "interactive": "electron --interactive --require ./dist/app"
     },
     "publishConfig": {
         "access": "public"
