@@ -193,6 +193,7 @@ export class App {
 
     showWindow() {
         if (this.window) {
+            this.window.show();
             this.window.focus();
             return;
         }
@@ -207,6 +208,9 @@ export class App {
                 scrollBounce: true,
             },
         });
+
+        this.window.setMenuBarVisibility(false);
+        this.window.setAutoHideMenuBar(true);
 
         this.window.base_url = this.url;
         this.window.connected = this.client.connected;
@@ -230,7 +234,9 @@ export class App {
         });
     }
 
-    static async ready() {
+    static async ready(launch_info) {
+        log.info('Launch info', launch_info);
+
         require('./menu');
 
         this.tray = new Tray(electron.nativeImage.createEmpty());
@@ -279,6 +285,7 @@ export class App {
 
     static showPreferences() {
         if (this.preferences_window) {
+            this.preferences_window.show();
             this.preferences_window.focus();
             return;
         }
@@ -325,47 +332,53 @@ export class App {
 
         callback({requestHeaders});
     }
+
+    static handleGetPreferencesUrl(event) {
+        event.sender.send('preferences-url', app.url);
+    }
+
+    static handleGetAuthenticatedUser(event) {
+        event.sender.send('authenticated-user', app.client.connection && app.client.connection.authenticated_user ? {
+            id: app.client.connection.authenticated_user.id,
+            token: app.client.connection.authenticated_user.token,
+            asset_token: app.client.connection.authenticated_user.asset_token,
+            data: app.client.connection.authenticated_user,
+        } : null);
+    }
+
+    static async handleSetPreferences(event, data) {
+        if (data.url !== app.url) {
+            app.url = data.url;
+
+            await App.storage.setItem('URL', data.url);
+        }
+    }
 }
 
-if (process.platform === 'darwin') electron.app.dock.hide();
+electron.app.setAboutPanelOptions({
+    applicationName: 'Home',
+    applicationVersion: require('../../package').version,
+    credits: 'https://gitlab.fancy.org.uk/hap-server/electron-app',
+    website: 'https://gitlab.fancy.org.uk/hap-server/electron-app',
+    // iconPath
+});
 
 export const app = new App();
-const client = app.client;
 
-electron.app.on('ready', App.ready.bind(App));
+electron.app.whenReady().then(() => App.ready());
+electron.app.on('activate', app.showWindow.bind(app));
 
 electron.app.on('window-all-closed', () => {
     // Don't quit as we want to stay connected to the server to show notifications
 });
 
-electron.app.on('activate', app.showWindow.bind(app));
-
-export function showPreferences() {
-    App.showPreferences();
-}
-
-ipcMain.on('get-preferences-url', event => {
-    event.sender.send('preferences-url', app.url);
-});
-
-ipcMain.on('get-authenticated-user', event => {
-    event.sender.send('authenticated-user', app.client.connection && app.client.connection.authenticated_user ? {
-        id: app.client.connection.authenticated_user.id,
-        token: app.client.connection.authenticated_user.token,
-        asset_token: app.client.connection.authenticated_user.asset_token,
-        data: app.client.connection.authenticated_user,
-    } : null);
-});
-
-ipcMain.on('set-preferences', async (event, data) => {
-    if (data.url !== app.url) {
-        app.url = data.url;
-
-        await App.storage.setItem('URL', data.url);
-    }
-});
+ipcMain.on('get-preferences-url', App.handleGetPreferencesUrl.bind(App));
+ipcMain.on('get-authenticated-user', App.handleGetAuthenticatedUser.bind(App));
+ipcMain.on('set-preferences', App.handleSetPreferences.bind(App));
 
 if (process.platform === 'darwin') {
+    electron.app.dock.hide();
+
     electron.systemPreferences.subscribeNotification('AppleInterfaceThemeChangedNotification', () => {
         electron.systemPreferences.setAppLevelAppearance(electron.systemPreferences.isDarkMode() ? 'dark' : 'light');
     });

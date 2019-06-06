@@ -1,5 +1,5 @@
 import {app, shell, Menu} from 'electron';
-import {showPreferences} from '.';
+import {App} from '.';
 
 const isMac = process.platform === 'darwin';
 
@@ -8,7 +8,7 @@ const template = [
         label: app.getName(),
         submenu: [
             {role: 'about'},
-            {label: 'Preferences', click: showPreferences, accelerator: 'CommandOrControl+,'},
+            {label: 'Preferences', click: () => App.showPreferences(), accelerator: 'CommandOrControl+,'},
             {type: 'separator'},
             {role: 'services'},
             {type: 'separator'},
@@ -23,7 +23,7 @@ const template = [
         label: 'File',
         submenu: [
             isMac ? {role: 'close'} : {role: 'quit'},
-            ...(isMac ? [] : [{label: 'Preferences', click: showPreferences, accelerator: 'CommandOrControl+,'}]),
+            ...(isMac ? [] : [{label: 'Preferences', click: () => App.showPreferences(), accelerator: 'CommandOrControl+,'}]),
         ],
     },
     {role: 'editMenu'},
