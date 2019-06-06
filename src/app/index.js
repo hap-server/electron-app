@@ -4,14 +4,12 @@ import fs from 'fs';
 import url from 'url';
 import persist from 'node-persist';
 
-import Logger from '@hap-server/hap-server/core/logger';
+import {Logger, Client, AuthenticatedUser, Characteristic, path as hap_server_path} from '@hap-server/hap-server/client';
+import WebSocket from 'ws';
+
 const log = new Logger();
 
 log.info('Starting');
-
-import {Client, Characteristic} from '@hap-server/hap-server/client';
-import {AuthenticatedUser} from '@hap-server/hap-server/common/connection';
-import WebSocket from 'ws';
 
 // const persist_path = path.join(electron.app.getPath('appData'), 'hap-server', 'persist');
 const persist_path = path.resolve(__dirname, '..', '..', 'data');
@@ -215,7 +213,7 @@ export class App {
         this.window.base_url = this.url;
         this.window.connected = this.client.connected;
 
-        this.window.loadFile(require.resolve('@hap-server/hap-server/public/index.html'));
+        this.window.loadFile(path.join(hap_server_path, 'public', 'app.html'));
 
         this.window.once('ready-to-show', () => {
             this.window.show();
