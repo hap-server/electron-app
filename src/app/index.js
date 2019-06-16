@@ -197,6 +197,8 @@ export class App {
         }
 
         this.window = new BrowserWindow({
+            width: 1000,
+            height: 650,
             show: false,
             backgroundColor: '#495057',
             titleBarStyle: 'hiddenInset',
