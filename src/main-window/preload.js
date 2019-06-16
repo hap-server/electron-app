@@ -1,6 +1,17 @@
 import electron from 'electron';
 import url from 'url';
 
+document.addEventListener('DOMContentLoaded', () => {
+    document.documentElement.classList.add(electron.remote.systemPreferences.isDarkMode() ?
+        'theme-dark' : 'theme-light');
+});
+
+electron.remote.systemPreferences.subscribeNotification('AppleInterfaceThemeChangedNotification', () => {
+    const dark = electron.remote.systemPreferences.isDarkMode();
+    document.documentElement.classList.remove(dark ? 'theme-light' : 'theme-dark');
+    document.documentElement.classList.add(dark ? 'theme-dark' : 'theme-light');
+});
+
 global.__HAP_SERVER_NATIVE_HOOK__ = ({Client, Connection, Vue, MainComponent}) => {
     class IPCConnection extends Connection {
         constructor(ipc) {
