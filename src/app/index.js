@@ -157,6 +157,28 @@ export class App {
 
     async sendFromRenderer(event, {messageid, data}) {
         if (this.client.connection) {
+            if (data.type === 'list-accessories') {
+                return event.sender.send('r', {
+                    messageid,
+                    response: Object.keys(this.client.accessories),
+                });
+            } else if (data.type === 'get-accessories') {
+                return event.sender.send('r', {
+                    messageid,
+                    response: data.id.map(uuid => this.client.accessories[uuid]._details),
+                });
+            } else if (data.type === 'get-accessories-data') {
+                return event.sender.send('r', {
+                    messageid,
+                    response: data.id.map(uuid => this.client.accessories[uuid]._data),
+                });
+            } else if (data.type === 'get-home-settings') {
+                return event.sender.send('r', {
+                    messageid,
+                    response: this.client.home_settings,
+                });
+            }
+
             const response = await this.client.connection.send(data);
             event.sender.send('r', {messageid, response});
 
@@ -183,6 +205,18 @@ export class App {
 
                 this.client.connection.getHomeSettings().then(d => this.client.home_settings = d);
                 this.client.refreshAccessories();
+            } else if (data.type === 'set-accessories-data') {
+                for (const [uuid, data] of data.id_data) {
+                    this.client.handleBroadcastMessage({
+                        type: 'update-accessory-data',
+                        uuid, data,
+                    });
+                }
+            } else if (data.type === 'set-home-settings') {
+                this.client.handleBroadcastMessage({
+                    type: 'update-home-settings',
+                    data: data.data,
+                });
             }
         } else {
             event.sender.send('r', {messageid, response: null});
