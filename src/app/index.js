@@ -273,8 +273,12 @@ export class App {
 
         require('./menu');
 
-        this.tray = new Tray(electron.nativeImage.createEmpty());
-        this.tray.setTitle('Home');
+        const icon = electron.nativeImage
+            .createFromPath(path.resolve(__dirname, '..', '..', 'assets', 'home-icon.png'))
+            .resize({height: 22});
+        icon.setTemplateImage(true);
+
+        this.tray = new Tray(icon);
 
         this.menu = Menu.buildFromTemplate([
             {label: 'Show', click: () => app.showWindow()},
