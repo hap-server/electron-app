@@ -6,6 +6,7 @@ import persist from 'node-persist';
 
 import {Logger, Client, AuthenticatedUser, Characteristic, path as hap_server_path} from '@hap-server/hap-server/client';
 import WebSocket from 'ws';
+import windowStateKeeper from 'electron-window-state';
 
 const log = new Logger();
 
@@ -230,6 +231,11 @@ export class App {
             return;
         }
 
+        const window_state = windowStateKeeper({
+            path: path.join(persist_path, 'window-state'),
+            file: 'main.json',
+        });
+
         this.window = new BrowserWindow({
             width: 1000,
             height: 650,
@@ -249,6 +255,8 @@ export class App {
         this.window.base_url = this.url;
         this.window.connected = this.client.connected;
 
+        window_state.manage(this.window);
+
         this.window.loadFile(path.join(hap_server_path, 'public', 'app.html'));
 
         this.window.once('ready-to-show', () => {
@@ -263,6 +271,7 @@ export class App {
             // in an array if your app supports multi windows, this is the time
             // when you should delete the corresponding element
             this.window = null;
+            window_state.unmanage();
 
             if (process.platform === 'darwin' && !BrowserWindow.getAllWindows().length) electron.app.dock.hide();
         });
@@ -328,6 +337,11 @@ export class App {
             return;
         }
 
+        const window_state = windowStateKeeper({
+            path: path.join(persist_path, 'window-state'),
+            file: 'preferences.json',
+        });
+
         this.preferences_window = new BrowserWindow({
             width: 500,
             height: 200,
@@ -341,6 +355,8 @@ export class App {
                 preload: require.resolve('../preferences-window'),
             },
         });
+
+        window_state.manage(this.preferences_window);
 
         this.preferences_window.loadURL('about:blank');
 
@@ -356,6 +372,7 @@ export class App {
             // in an array if your app supports multi windows, this is the time
             // when you should delete the corresponding element
             this.preferences_window = null;
+            window_state.unmanage();
 
             if (process.platform === 'darwin' && !BrowserWindow.getAllWindows().length) electron.app.dock.hide();
         });

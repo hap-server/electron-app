@@ -26,6 +26,7 @@
     "dependencies": {
         "@hap-server/hap-server": "^0.6.0",
         "electron": "^5.0.2",
+        "electron-window-state": "^5.0.3",
         "node-persist": "^3.0.4",
         "ws": "^6.2.1"
     },
