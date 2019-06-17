@@ -73,13 +73,13 @@ global.__HAP_SERVER_NATIVE_HOOK__ = ({Client, Connection, Vue, MainComponent}) =
             connection.ipc.on('up', event => {
                 console.log('Connected');
                 this.connection = connection;
+                connection.on('received-broadcast', this._handleBroadcastMessage);
+                connection.on('disconnected', this._handleDisconnected);
                 this.emit('connected', connection);
                 this.connected = true;
             });
             connection.ipc.on('down', event => {
                 this.handleDisconnected();
-
-                global.$root.$children[0].connection = null;
             });
 
             setTimeout(() => {
@@ -87,6 +87,8 @@ global.__HAP_SERVER_NATIVE_HOOK__ = ({Client, Connection, Vue, MainComponent}) =
 
                 if (electron.remote.getCurrentWindow().connected) {
                     this.connection = connection;
+                    connection.on('received-broadcast', this._handleBroadcastMessage);
+                    connection.on('disconnected', this._handleDisconnected);
                     this.emit('connected', connection);
                     this.connected = true;
                 }
