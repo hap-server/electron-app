@@ -33,7 +33,8 @@
     "devDependencies": {
         "electron-installer-debian": "^2.0.1",
         "electron-packager": "^14.0.6",
-        "typescript": "^3.6.4"
+        "typescript": "^3.6.4",
+        "vue": "^2.6.10"
     },
     "scripts": {
         "build": "tsc",
