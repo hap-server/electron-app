@@ -179,7 +179,7 @@ class App {
         return authenticated_user;
     }
 
-    async sendFromRenderer(event: Electron.IpcMessageEvent, {messageid, data}) {
+    async sendFromRenderer(event, {messageid, data}) {
         if (this.client.connection) {
             if (data.type === 'list-accessories') {
                 return event.sender.send('r', {
