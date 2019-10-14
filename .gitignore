@@ -1,5 +1,11 @@
 node_modules
 dist
-release
+
+Home-darwin-x64
+Home-linux-x64
+Home-win32-x64
+hap-server-electron-app.tgz
+Home.app.zip
+hap-server-electron-app.dpkg
 
 data

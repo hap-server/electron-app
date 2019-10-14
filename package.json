@@ -14,7 +14,7 @@
         "name": "Samuel Elliott",
         "url": "https://samuelthomas2774.github.io"
     },
-    "main": "dist/index.js",
+    "main": "dist/app/index.js",
     "repository": {
         "type": "git",
         "url": "https://gitlab.fancy.org.uk/hap-server/electron-app.git"
@@ -31,6 +31,8 @@
         "ws": "^6.2.1"
     },
     "devDependencies": {
+        "electron-installer-debian": "^2.0.1",
+        "electron-packager": "^14.0.6",
         "typescript": "^3.6.4"
     },
     "scripts": {
@@ -38,6 +40,10 @@
         "start": "electron dist/app",
         "interactive": "electron --interactive --require ./dist/app"
     },
+    "files": [
+        "dist",
+        "assets"
+    ],
     "publishConfig": {
         "access": "public"
     }
