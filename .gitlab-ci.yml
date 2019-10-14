@@ -12,6 +12,8 @@ cache:
 build:
     stage: build
     script:
+        - apt update && apt install zip
+
         - npm --color="always" install
         - npx tsc
 
