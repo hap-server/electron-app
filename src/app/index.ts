@@ -179,7 +179,7 @@ class App {
         return authenticated_user;
     }
 
-    async sendFromRenderer(event, {messageid, data}) {
+    async sendFromRenderer(event: Electron.IpcMessageEvent, {messageid, data}) {
         if (this.client.connection) {
             if (data.type === 'list-accessories') {
                 return event.sender.send('r', {
@@ -201,6 +201,44 @@ class App {
                     messageid,
                     response: this.client.home_settings,
                 });
+            } else if (data.type === 'subscribe-characteristics') {
+                console.log(data);
+
+                try {
+                    return event.sender.send('r', {
+                        messageid,
+                        response: await Promise.all(data.ids.map(([accessory_uuid, service_id, characteristic_uuid]) => {
+                            const accessory = this.client.accessories[accessory_uuid];
+                            const service = accessory.services[service_id];
+                            const characteristic = service.characteristics[characteristic_uuid];
+    
+                            return characteristic.subscribe(event.sender);
+                        })),
+                    });
+                } catch (err) {
+                    return event.sender.send('r', {
+                        messageid,
+                    });
+                }
+            } else if (data.type === 'unsubscribe-characteristics') {
+                console.log(data);
+
+                try {
+                    return event.sender.send('r', {
+                        messageid,
+                        response: await Promise.all(data.ids.map(([accessory_uuid, service_id, characteristic_uuid]) => {
+                            const accessory = this.client.accessories[accessory_uuid];
+                            const service = accessory.services[service_id];
+                            const characteristic = service.characteristics[characteristic_uuid];
+    
+                            return characteristic.unsubscribe(event.sender);
+                        })),
+                    });
+                } catch (err) {
+                    return event.sender.send('r', {
+                        messageid,
+                    });
+                }
             }
 
             const response = await this.client.connection.send(data);
@@ -471,6 +509,21 @@ electron_app.on('browser-window-created', (event, window) => {
     window.base_url = app.url;
     // @ts-ignore
     window.connected = app.client.connected;
+});
+
+electron_app.on('web-contents-created', (event, webContents) => {
+    webContents.on('destroyed', event => {
+        // Remove this window's characteristic subscriptions
+        Characteristic.unsubscribeAll(webContents);
+    });
+    webContents.on('crashed', event => {
+        // Remove this window's characteristic subscriptions
+        Characteristic.unsubscribeAll(webContents);
+    });
+    webContents.on('did-navigate', event => {
+        // Remove this window's characteristic subscriptions
+        Characteristic.unsubscribeAll(webContents);
+    });
 });
 
 electron_app.on('window-all-closed', () => {
