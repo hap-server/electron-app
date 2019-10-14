@@ -24,7 +24,7 @@ build:
         # macOS
         - npx electron-packager . Home --platform darwin --arch x64 --ignore "src|data|\.(d\.ts|map|git)|package-lock|tsconfig"
         - cd Home-darwin-x64
-        - zip -r ../Home.app.zip Home-darwin-x64/Home.app/*
+        - zip -r ../Home.app.zip Home.app/*
         - cd ..
 
         # Linux + dpkg
