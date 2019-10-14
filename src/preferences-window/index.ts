@@ -34,7 +34,7 @@ import {ipcRenderer, remote} from 'electron';
     input.style.fontSize = '13px';
     container.appendChild(input);
 
-    const authenticated_user = await new Promise(rs => (ipcRenderer.send('get-authenticated-user'),
+    const authenticated_user = await new Promise<any>(rs => (ipcRenderer.send('get-authenticated-user'),
         ipcRenderer.once('authenticated-user', (event, authenticated_user) => rs(authenticated_user))));
     let authenticated_as;
     if (authenticated_user) {

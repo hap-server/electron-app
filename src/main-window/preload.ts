@@ -12,6 +12,7 @@ electron.remote.systemPreferences.subscribeNotification('AppleInterfaceThemeChan
     document.documentElement.classList.add(dark ? 'theme-dark' : 'theme-light');
 });
 
+// @ts-ignore
 global.__HAP_SERVER_NATIVE_HOOK__ = ({Client, Connection, Vue, MainComponent}) => {
     class IPCConnection extends Connection {
         constructor(ipc) {
@@ -85,6 +86,7 @@ global.__HAP_SERVER_NATIVE_HOOK__ = ({Client, Connection, Vue, MainComponent}) =
             setTimeout(() => {
                 if (this.connection) return;
 
+                // @ts-ignore
                 if (electron.remote.getCurrentWindow().connected) {
                     this.connection = connection;
                     connection.on('received-broadcast', this._handleBroadcastMessage);
@@ -104,6 +106,11 @@ global.__HAP_SERVER_NATIVE_HOOK__ = ({Client, Connection, Vue, MainComponent}) =
         }
     }
 
-    const native_hook = {Client: NativeClient, base_url: electron.remote.getCurrentWindow().base_url};
+    const native_hook = {
+        Client: NativeClient,
+        // @ts-ignore
+        base_url: electron.remote.getCurrentWindow().base_url,
+        electron,
+    };
     return native_hook;
 };

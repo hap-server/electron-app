@@ -24,10 +24,10 @@
         "node": ">=8.0.0 <12"
     },
     "dependencies": {
-        "@hap-server/hap-server": "^0.7.0",
-        "electron": "^5.0.4",
+        "@hap-server/hap-server": "^0.9.1",
+        "electron": "^6.0.12",
         "electron-window-state": "^5.0.3",
-        "node-persist": "^3.0.4",
+        "node-persist": "^3.0.5",
         "ws": "^6.2.1"
     },
     "devDependencies": {
@@ -35,10 +35,11 @@
         "babel-preset-env": "^1.7.0",
         "gulp": "^4.0.1",
         "gulp-babel": "^7.0.1",
-        "pump": "^3.0.0"
+        "pump": "^3.0.0",
+        "typescript": "^3.6.4"
     },
     "scripts": {
-        "build": "gulp build",
+        "build": "tsc",
         "start": "electron dist/app",
         "interactive": "electron --interactive --require ./dist/app"
     },

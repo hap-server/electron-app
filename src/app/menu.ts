@@ -46,7 +46,7 @@ const template = [
             },
         ],
     },
-];
+] as Electron.MenuItemConstructorOptions[];
 
 const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
