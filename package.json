@@ -28,7 +28,7 @@
         "electron": "^6.0.12",
         "electron-window-state": "^5.0.3",
         "node-persist": "^3.0.5",
-        "ws": "^6.2.1"
+        "ws": "^7.4.6"
     },
     "devDependencies": {
         "electron-installer-debian": "^2.0.1",
